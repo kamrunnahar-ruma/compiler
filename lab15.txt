@@ -1,9 +1,7 @@
 2
-A 3 ab ac ad
-B 2 x y
-
-
-Left-Factored Grammar:
-A -> aZ
-B -> x | y
-Z -> b | c | d
+S 3
+iEtS
+iEtSeS
+a
+E 1
+b
