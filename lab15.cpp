@@ -1,99 +1,81 @@
 /**
- * PROBLEM: 15. Write a C++ program to perform left factoring for a given grammar
+ * PROBLEM 15: Left Factoring of Grammar (Using # for epsilon)
  */
 
 #include <iostream>
 #include <vector>
 #include <map>
 #include <string>
-#include <fstream>
 using namespace std;
 
-/* ---------- Helper: Longest Common Prefix ---------- */
-string longestCommonPrefix(vector<string> &v)
+/* ---------- Find common prefix of two strings ---------- */
+string commonPrefix(string a, string b)
 {
-    if (v.empty())
-        return "";
-    string prefix = v[0];
-    for (int i = 1; i < v.size(); i++)
-    {
-        int j = 0;
-        while (j < prefix.length() && j < v[i].length() && prefix[j] == v[i][j])
-            j++;
-        prefix = prefix.substr(0, j);
-        if (prefix == "")
-            break;
-    }
-    return prefix;
+    int i = 0;
+    while (i < a.size() && i < b.size() && a[i] == b[i])
+        i++;
+    return a.substr(0, i);
 }
 
 int main()
 {
-    ifstream file("lab15.txt"); // read from file
-    if (!file)
-    {
-        cout << "Error: input.txt not found\n";
-        return 0;
-    }
+    map<string, vector<string>> grammar;
 
-    int n;
-    file >> n; // number of non-terminals
+    // Input Grammar
+    grammar["S"] = {"iEtS", "iEtSeS", "a"};
+    grammar["E"] = {"b"};
 
-    map<char, vector<string>> grammar;
-
-    for (int i = 0; i < n; i++)
-    {
-        char nt;
-        int p;
-        file >> nt >> p; // non-terminal and number of productions
-        vector<string> prods;
-        for (int j = 0; j < p; j++)
-        {
-            string prod;
-            file >> prod;
-            prods.push_back(prod);
-        }
-        grammar[nt] = prods;
-    }
-
-    file.close();
-
-    map<char, vector<string>> newGrammar;
-    char nextNT = 'Z';
+    map<string, vector<string>> result;
 
     for (auto g : grammar)
     {
-        char nt = g.first;
-        vector<string> prods = g.second;
+        string nt = g.first;
+        vector<string> p = g.second;
 
-        string prefix = longestCommonPrefix(prods);
-
-        if (prefix != "" && prods.size() > 1)
+        if (p.size() < 2)
         {
-            // Create new non-terminal
-            char newNT = nextNT--;
-            vector<string> suffixes;
+            result[nt] = p;
+            continue;
+        }
 
-            for (auto s : prods)
+        string prefix = commonPrefix(p[0], p[1]);
+
+        vector<string> factored, rest;
+
+        for (auto s : p)
+        {
+            if (s.find(prefix) == 0)
+                factored.push_back(s);
+            else
+                rest.push_back(s);
+        }
+
+        if (!prefix.empty() && factored.size() > 1)
+        {
+            string newNT = nt + "'";
+
+            result[nt].push_back(prefix + newNT);
+
+            for (auto r : rest)
+                result[nt].push_back(r);
+
+            for (auto f : factored)
             {
-                string suf = s.substr(prefix.length());
+                string suf = f.substr(prefix.length());
                 if (suf == "")
-                    suf = "e"; // epsilon
-                suffixes.push_back(suf);
+                    suf = "#";   // epsilon
+                result[newNT].push_back(suf);
             }
-
-            newGrammar[nt].push_back(prefix + newNT);
-            newGrammar[newNT] = suffixes;
         }
         else
         {
-            newGrammar[nt] = prods;
+            result[nt] = p;
         }
     }
 
-    /* ---------- Print Left-Factored Grammar ---------- */
+    /* ---------- Output ---------- */
     cout << "\nLeft-Factored Grammar:\n";
-    for (auto g : newGrammar)
+    for (auto g : result)
     {
         cout << g.first << " -> ";
         for (int i = 0; i < g.second.size(); i++)
